@@ -2,11 +2,12 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>弁当注文書</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>弁当・単品注文書</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
+            margin: 20px;
         }
         table {
             width: 100%;
@@ -21,6 +22,12 @@
         th {
             background-color: #f2f2f2;
         }
+        select, button {
+            padding: 10px;
+            font-size: 1em;
+            margin: 5px 0;
+            width: 100%;
+        }
         .total {
             font-weight: bold;
         }
@@ -30,6 +37,7 @@
             color: white;
             border: none;
             cursor: pointer;
+            width: 100%;
             font-size: 16px;
         }
         .copy-button:hover {
@@ -38,39 +46,37 @@
     </style>
 </head>
 <body>
-    <h1>弁当注文書</h1>
+    <h1>弁当・単品注文書</h1>
+    <h2>弁当メニュー</h2>
     <form id="orderForm">
         <table>
             <thead>
                 <tr>
                     <th>弁当の種類</th>
                     <th>価格</th>
-                    <th>ごはん 普通</th>
-                    <th>ごはん 大盛</th>
+                    <th>ごはん</th>
+                    <th>個数</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>チキン弁当</td>
-                    <td>500円</td>
-                    <td><input type="number" min="0" value="0" class="normal-rice" data-price="500"></td>
-                    <td><input type="number" min="0" value="0" class="large-rice" data-price="600"></td>
-                </tr>
-                <tr>
-                    <td>ハンバーグ弁当</td>
-                    <td>600円</td>
-                    <td><input type="number" min="0" value="0" class="normal-rice" data-price="600"></td>
-                    <td><input type="number" min="0" value="0" class="large-rice" data-price="700"></td>
-                </tr>
-                <tr>
-                    <td>鮭弁当</td>
-                    <td>550円</td>
-                    <td><input type="number" min="0" value="0" class="normal-rice" data-price="550"></td>
-                    <td><input type="number" min="0" value="0" class="large-rice" data-price="650"></td>
-                </tr>
-                <!-- 必要に応じて他の弁当を追加 -->
+            <tbody id="bentoMenu">
+                <!-- 弁当メニューをここに動的に生成 -->
             </tbody>
         </table>
+
+        <h2>単品メニュー</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>単品の種類</th>
+                    <th>価格</th>
+                    <th>個数</th>
+                </tr>
+            </thead>
+            <tbody id="singleMenu">
+                <!-- 単品メニューをここに動的に生成 -->
+            </tbody>
+        </table>
+
         <div>
             <p>全体の個数: <span id="totalQuantity">0</span> 個</p>
             <p>合計金額: <span id="totalAmount">0</span> 円</p>
@@ -79,25 +85,74 @@
     </form>
 
     <script>
+        const bentoMenu = [
+            { name: 'チキン弁当', price: 500 },
+            { name: 'ハンバーグ弁当', price: 600 },
+            { name: '鮭弁当', price: 550 },
+            // 他の弁当メニュー追加 (全21種類)
+        ];
+
+        const singleMenu = [
+            { name: '唐揚げ', price: 300 },
+            { name: 'コロッケ', price: 200 },
+            { name: '卵焼き', price: 150 },
+            // 他の単品メニュー追加 (全7種類)
+        ];
+
+        function createBentoRow(bento) {
+            const row = document.createElement('tr');
+            const riceOptions = `
+                <select class="rice">
+                    <option value="0">普通</option>
+                    <option value="50">大盛 (+50円)</option>
+                </select>
+            `;
+            row.innerHTML = `
+                <td>${bento.name}</td>
+                <td>${bento.price}円</td>
+                <td>${riceOptions}</td>
+                <td>
+                    <select class="quantity">
+                        ${Array.from({ length: 10 }, (_, i) => `<option value="${i}">${i}</option>`).join('')}
+                    </select>
+                </td>
+            `;
+            return row;
+        }
+
+        function createSingleRow(single) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${single.name}</td>
+                <td>${single.price}円</td>
+                <td>
+                    <select class="quantity">
+                        ${Array.from({ length: 10 }, (_, i) => `<option value="${i}">${i}</option>`).join('')}
+                    </select>
+                </td>
+            `;
+            return row;
+        }
+
         function updateTotals() {
             let totalQuantity = 0;
             let totalAmount = 0;
 
-            const normalRiceInputs = document.querySelectorAll('.normal-rice');
-            const largeRiceInputs = document.querySelectorAll('.large-rice');
-
-            normalRiceInputs.forEach(input => {
-                const qty = parseInt(input.value) || 0;
-                const price = parseInt(input.getAttribute('data-price')) || 0;
+            // 弁当メニュー
+            document.querySelectorAll('#bentoMenu tr').forEach(row => {
+                const price = parseInt(row.cells[1].innerText);
+                const rice = parseInt(row.querySelector('.rice').value);
+                const qty = parseInt(row.querySelector('.quantity').value);
                 totalQuantity += qty;
-                totalAmount += qty * price;
+                totalAmount += (price + rice) * qty;
             });
 
-            largeRiceInputs.forEach(input => {
-                const qty = parseInt(input.value) || 0;
-                const price = parseInt(input.getAttribute('data-price')) || 0;
+            // 単品メニュー
+            document.querySelectorAll('#singleMenu tr').forEach(row => {
+                const price = parseInt(row.cells[1].innerText);
+                const qty = parseInt(row.querySelector('.quantity').value);
                 totalQuantity += qty;
-                totalAmount += qty * price;
+                totalAmount += price * qty;
             });
 
             document.getElementById('totalQuantity').innerText = totalQuantity;
@@ -105,14 +160,25 @@
         }
 
         function copyToClipboard() {
-            let copyText = "弁当注文内容:\n";
-            const rows = document.querySelectorAll('tbody tr');
+            let copyText = "注文内容:\n";
+            
+            // 弁当メニュー
+            document.querySelectorAll('#bentoMenu tr').forEach(row => {
+                const name = row.cells[0].innerText;
+                const rice = row.querySelector('.rice').selectedOptions[0].innerText;
+                const qty = row.querySelector('.quantity').value;
+                if (qty > 0) {
+                    copyText += `${name} - ごはん: ${rice}, ${qty}個\n`;
+                }
+            });
 
-            rows.forEach(row => {
-                const type = row.cells[0].innerText;
-                const normalQty = row.querySelector('.normal-rice').value;
-                const largeQty = row.querySelector('.large-rice').value;
-                copyText += `${type} - ごはん 普通: ${normalQty}個, ごはん 大盛: ${largeQty}個\n`;
+            // 単品メニュー
+            document.querySelectorAll('#singleMenu tr').forEach(row => {
+                const name = row.cells[0].innerText;
+                const qty = row.querySelector('.quantity').value;
+                if (qty > 0) {
+                    copyText += `${name} - ${qty}個\n`;
+                }
             });
 
             copyText += `\n全体の個数: ${document.getElementById('totalQuantity').innerText}個`;
@@ -125,13 +191,25 @@
             });
         }
 
-        // 入力フィールドの変更時に合計を更新
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', updateTotals);
+        // ページが読み込まれた時に弁当と単品のメニューを生成
+        const bentoMenuContainer = document.getElementById('bentoMenu');
+        bentoMenu.forEach(bento => {
+            const row = createBentoRow(bento);
+            bentoMenuContainer.appendChild(row);
         });
 
-        // ページ読み込み時に初期合計を計算
-        updateTotals();
+        const singleMenuContainer = document.getElementById('singleMenu');
+        singleMenu.forEach(single => {
+            const row = createSingleRow(single);
+            singleMenuContainer.appendChild(row);
+        });
+
+        // 入力が変わった時に合計を更新
+        document.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', updateTotals);
+        });
+
+        updateTotals(); // 初期合計の更新
     </script>
 </body>
 </html>
