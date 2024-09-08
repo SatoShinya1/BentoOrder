@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>弁当注文書</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .total {
+            font-weight: bold;
+        }
+        .copy-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .copy-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>弁当注文書</h1>
+    <form id="orderForm">
+        <table>
+            <thead>
+                <tr>
+                    <th>弁当の種類</th>
+                    <th>価格</th>
+                    <th>ごはん 普通</th>
+                    <th>ごはん 大盛</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>チキン弁当</td>
+                    <td>500円</td>
+                    <td><input type="number" min="0" value="0" class="normal-rice" data-price="500"></td>
+                    <td><input type="number" min="0" value="0" class="large-rice" data-price="600"></td>
+                </tr>
+                <tr>
+                    <td>ハンバーグ弁当</td>
+                    <td>600円</td>
+                    <td><input type="number" min="0" value="0" class="normal-rice" data-price="600"></td>
+                    <td><input type="number" min="0" value="0" class="large-rice" data-price="700"></td>
+                </tr>
+                <tr>
+                    <td>鮭弁当</td>
+                    <td>550円</td>
+                    <td><input type="number" min="0" value="0" class="normal-rice" data-price="550"></td>
+                    <td><input type="number" min="0" value="0" class="large-rice" data-price="650"></td>
+                </tr>
+                <!-- 必要に応じて他の弁当を追加 -->
+            </tbody>
+        </table>
+        <div>
+            <p>全体の個数: <span id="totalQuantity">0</span> 個</p>
+            <p>合計金額: <span id="totalAmount">0</span> 円</p>
+        </div>
+        <button type="button" class="copy-button" onclick="copyToClipboard()">選択内容をコピー</button>
+    </form>
+
+    <script>
+        function updateTotals() {
+            let totalQuantity = 0;
+            let totalAmount = 0;
+
+            const normalRiceInputs = document.querySelectorAll('.normal-rice');
+            const largeRiceInputs = document.querySelectorAll('.large-rice');
+
+            normalRiceInputs.forEach(input => {
+                const qty = parseInt(input.value) || 0;
+                const price = parseInt(input.getAttribute('data-price')) || 0;
+                totalQuantity += qty;
+                totalAmount += qty * price;
+            });
+
+            largeRiceInputs.forEach(input => {
+                const qty = parseInt(input.value) || 0;
+                const price = parseInt(input.getAttribute('data-price')) || 0;
+                totalQuantity += qty;
+                totalAmount += qty * price;
+            });
+
+            document.getElementById('totalQuantity').innerText = totalQuantity;
+            document.getElementById('totalAmount').innerText = totalAmount;
+        }
+
+        function copyToClipboard() {
+            let copyText = "弁当注文内容:\n";
+            const rows = document.querySelectorAll('tbody tr');
+
+            rows.forEach(row => {
+                const type = row.cells[0].innerText;
+                const normalQty = row.querySelector('.normal-rice').value;
+                const largeQty = row.querySelector('.large-rice').value;
+                copyText += `${type} - ごはん 普通: ${normalQty}個, ごはん 大盛: ${largeQty}個\n`;
+            });
+
+            copyText += `\n全体の個数: ${document.getElementById('totalQuantity').innerText}個`;
+            copyText += `\n合計金額: ${document.getElementById('totalAmount').innerText}円`;
+
+            navigator.clipboard.writeText(copyText).then(() => {
+                alert('注文内容をクリップボードにコピーしました。');
+            }).catch(err => {
+                alert('コピーに失敗しました: ' + err);
+            });
+        }
+
+        // 入力フィールドの変更時に合計を更新
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', updateTotals);
+        });
+
+        // ページ読み込み時に初期合計を計算
+        updateTotals();
+    </script>
+</body>
+</html>
